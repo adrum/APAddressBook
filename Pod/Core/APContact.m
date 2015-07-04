@@ -20,6 +20,8 @@
     self = [super init];
     if (self)
     {
+	// Preserve original ABAddressBook record for future use (like generating vCard)
+        _originalABRecord = recordRef;
         _fieldMask = fieldMask;
         if (fieldMask & APContactFieldFirstName)
         {
