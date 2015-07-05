@@ -107,7 +107,11 @@ void APAddressBookExternalChangeCallback(ABAddressBookRef addressBookRef, CFDict
         }
     }
     
-    NSArray* naitiveContacts = [contacts valueForKey: @"originalABRecord"];
+    NSMutableArray *naitiveContacts = [[NSMutableArray alloc]init];
+    for (APContact *contact in contacts){
+        [naitiveContacts addObject:contact.originalABRecord];
+    }
+    
     CFDataRef vcards = (CFDataRef)ABPersonCreateVCardRepresentationWithPeople((__bridge CFArrayRef)(naitiveContacts));
     NSString *vcardString = [[NSString alloc] initWithData:(__bridge NSData *)vcards encoding:NSUTF8StringEncoding];
     
@@ -120,19 +124,31 @@ void APAddressBookExternalChangeCallback(ABAddressBookRef addressBookRef, CFDict
 
 + (NSString *)removeImageFromVcardString:(NSString*)vcard
 {
-    NSArray* allLinedStrings =
-    [vcard componentsSeparatedByCharactersInSet:
-     [NSCharacterSet newlineCharacterSet]];
+    NSScanner *scanner = [NSScanner scannerWithString:vcard];
+    NSString *text = nil;
     
-    NSMutableArray* vcardLinesWithoutPhotos = [[NSMutableArray alloc]init];
+    NSString *photo = @"PHOTO";
+    NSString *endVcard = @"END:VCARD";
+    NSString *socialProfile = @"X-SOCIALPROFILE";
     
-    for (NSString *line in allLinedStrings){
-        if (![line hasPrefix:@"PHOTO"]) {
-            [vcardLinesWithoutPhotos addObject:line];
+    if ([vcard rangeOfString:@"X-SOCIALPROFILE"].location == NSNotFound) {
+        while ([scanner isAtEnd] == NO) {
+            [scanner scanUpToString:photo intoString:NULL] ;
+            [scanner scanUpToString:endVcard intoString:&text] ;
+            vcard = [vcard stringByReplacingOccurrencesOfString:
+                          [NSString stringWithFormat:@"%@", text] withString:@""];
+        }
+    }else{
+        while ([scanner isAtEnd] == NO) {
+            [scanner scanUpToString:photo intoString:NULL] ;
+            [scanner scanUpToString:socialProfile intoString:&text] ;
+            [scanner scanUpToString:endVcard intoString:NULL];
+            vcard = [vcard stringByReplacingOccurrencesOfString:
+                          [NSString stringWithFormat:@"%@", text] withString:@""];
         }
     }
     
-    return [vcardLinesWithoutPhotos componentsJoinedByString: @"/n"];
+    return vcard;
 }
 
 - (void)loadContacts:(void (^)(NSArray *contacts, NSError *error))completionBlock
