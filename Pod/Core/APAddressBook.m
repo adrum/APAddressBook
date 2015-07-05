@@ -95,6 +95,46 @@ void APAddressBookExternalChangeCallback(ABAddressBookRef addressBookRef, CFDict
 
 }
 
++ (NSString *)getContactsVcard:(NSArray *)contacts withImage:(BOOL)copyImage
+{
+    if (contacts.count == 0) {
+        return @"";
+    }
+    
+    for (NSUInteger i = 0; i < contacts.count; i++){
+        if (![contacts[i] isKindOfClass:[APContact class]]) {
+            [NSException raise:@"Invalid type of object" format:@"input array object is not of 'APContact' type"];
+        }
+    }
+    
+    NSArray* naitiveContacts = [contacts valueForKey: @"recordID"];
+    CFDataRef vcards = (CFDataRef)ABPersonCreateVCardRepresentationWithPeople((__bridge CFArrayRef)(naitiveContacts));
+    NSString *vcardString = [[NSString alloc] initWithData:(__bridge NSData *)vcards encoding:NSUTF8StringEncoding];
+    
+    if (copyImage) {
+        return vcardString;
+    }
+    
+    return [self removeImageFromVcardString:vcardString];
+}
+
++ (NSString *)removeImageFromVcardString:(NSString*)vcard
+{
+    NSArray* allLinedStrings =
+    [vcard componentsSeparatedByCharactersInSet:
+     [NSCharacterSet newlineCharacterSet]];
+    
+    NSMutableArray* vcardLinesWithoutPhotos = [[NSMutableArray alloc]init];
+    
+    for (NSString *line in allLinedStrings){
+        if (![line hasPrefix:@"PHOTO"]) {
+            [vcardLinesWithoutPhotos addObject:line];
+        }
+    }
+    
+    return [vcardLinesWithoutPhotos componentsJoinedByString: @"/n"];
+}
+
 - (void)loadContacts:(void (^)(NSArray *contacts, NSError *error))completionBlock
 {
     [self loadContactsOnQueue:dispatch_get_main_queue() completion:completionBlock];
