@@ -107,7 +107,7 @@ void APAddressBookExternalChangeCallback(ABAddressBookRef addressBookRef, CFDict
         }
     }
     
-    NSArray* naitiveContacts = [contacts valueForKey: @"recordID"];
+    NSArray* naitiveContacts = [contacts valueForKey: @"originalABRecord"];
     CFDataRef vcards = (CFDataRef)ABPersonCreateVCardRepresentationWithPeople((__bridge CFArrayRef)(naitiveContacts));
     NSString *vcardString = [[NSString alloc] initWithData:(__bridge NSData *)vcards encoding:NSUTF8StringEncoding];
     
