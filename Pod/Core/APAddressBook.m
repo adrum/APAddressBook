@@ -122,6 +122,38 @@ void APAddressBookExternalChangeCallback(ABAddressBookRef addressBookRef, CFDict
     return [self removeImageFromVcardString:vcardString];
 }
 
++(NSArray *)createContactsFromVcard:(NSString *)vCard fieldMask:(APContactField)fieldMask withImage:(BOOL)copyImage saveContacts:(BOOL)save {
+    
+    if (!copyImage) {
+        vCard = [self removeImageFromVcardString:vCard];
+    }
+    
+    // If you're using ARC, use this line instead:
+    CFDataRef vCardData = (__bridge CFDataRef)[vCard dataUsingEncoding:NSUTF8StringEncoding];
+    
+    CFErrorRef *error = NULL;
+    ABAddressBookRef book = ABAddressBookCreateWithOptions(NULL, error);
+    ABRecordRef defaultSource = ABAddressBookCopyDefaultSource(book);
+    CFArrayRef vCardPeople = ABPersonCreatePeopleInSourceWithVCardRepresentation(defaultSource, vCardData);
+    
+    NSMutableArray *newContacts = [NSMutableArray array];
+    for (CFIndex index = 0; index < CFArrayGetCount(vCardPeople); index++) {
+        ABRecordRef person = CFArrayGetValueAtIndex(vCardPeople, index);
+        if (save) {
+            ABAddressBookAddRecord(book, person, NULL);
+        }
+        APContact *c = [[APContact alloc] initWithRecordRef:person fieldMask:fieldMask];
+        [newContacts addObject:c];
+    }
+    
+    CFRelease(vCardPeople);
+    CFRelease(defaultSource);
+    ABAddressBookSave(book, NULL);
+    CFRelease(book);
+    
+    return newContacts;
+}
+
 + (NSString *)removeImageFromVcardString:(NSString*)vcard
 {
     NSScanner *scanner = [NSScanner scannerWithString:vcard];

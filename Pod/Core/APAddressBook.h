@@ -21,7 +21,9 @@
 + (void)requestAccess:(void (^)(BOOL granted, NSError * error))completionBlock;
 + (void)requestAccessOnQueue:(dispatch_queue_t)queue
                   completion:(void (^)(BOOL granted, NSError * error))completionBlock;
+
 + (NSString *)getContactsVcard:(NSArray *)contacts withImage:(BOOL)copyImage;
++ (NSArray *)createContactsFromVcard:(NSString *)vCard fieldMask:(APContactField)fieldMask withImage:(BOOL)copyImage saveContacts:(BOOL)save;
 
 - (void)loadContacts:(void (^)(NSArray *contacts, NSError *error))completionBlock;
 - (void)loadContactsOnQueue:(dispatch_queue_t)queue
