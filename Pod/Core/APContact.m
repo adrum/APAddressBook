@@ -20,8 +20,7 @@
     self = [super init];
     if (self)
     {
-	// Preserve original ABAddressBook record for future use (like generating vCard)
-        _originalABRecord = recordRef;
+        
         _fieldMask = fieldMask;
         if (fieldMask & APContactFieldFirstName)
         {
@@ -123,8 +122,16 @@
             [linkedRecordIDs removeObject:@(ABRecordGetRecordID(recordRef))];
             _linkedRecordIDs = linkedRecordIDs.array;
         }
+        
+        // Preserve original ABAddressBook record for future use (like generating vCard)
+        self.originalABRecord = recordRef;
     }
     return self;
+}
+
+-(void)dealloc {
+    if (_originalABRecord != NULL)
+        CFRelease(_originalABRecord);
 }
 
 #pragma mark - private
@@ -228,6 +235,18 @@
             block(multiValue, i);
         }
         CFRelease(multiValue);
+    }
+}
+
+-(void)setOriginalABRecord:(ABRecordRef)originalABRecord
+{
+    if (originalABRecord != NULL) {
+        CFRetain(originalABRecord);
+        
+        if (_originalABRecord != NULL)
+            CFRelease(_originalABRecord);
+        
+        _originalABRecord = originalABRecord;
     }
 }
 
